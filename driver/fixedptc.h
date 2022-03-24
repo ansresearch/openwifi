@@ -49,6 +49,9 @@
  * Copyright (c) 2020 Damian Wrobel <dwrobel@ertelnet.rybnik.pl>
  * Copyright (c) 2020 D3 Engineering, LLC.  Some code by
  *   Christopher White <cwhite@d3engineering.com>
+ Copyright (c) 2022 ANS research group Univ. Brescia 
+ * Lorenzo Ghiro removed part of the previously available code
+ * and modified the implementation of the exp function <lorenzo.ghiro@unibs.it>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
