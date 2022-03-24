@@ -404,6 +404,57 @@ fixedpt compute_deltaT (int deltams) {
 	return FIXEDPT_ZERO;
 }
 
+/*
+Reset all auxiliary variables used to control obfuscation, i.e.,
+turns off obfuscation. Used also to initialized these aux variables
+at module boot
+*/
+void turnOff_obfuscation(struct openwifi_priv *priv) {
+	fixedpt *Rnow, *R, *Rtmp, *mask, *smoothing_filter;
+	struct regmem* m;
+	timek *ctime, *prev;
+	int ii;
+	
+	//recover ANS variables from priv and init them
+	m = &(priv->ansMem);
+
+	Rnow = priv->Rnow;
+	R = priv->R;
+	Rtmp = priv->Rtmp;
+	mask = priv->mask;
+	smoothing_filter = priv->smoothing_filter;
+	ctime = &(priv->ctime);
+	prev = &(priv->prev);
+
+	// obfuscation initally OFF
+	priv->obstatus = 0;
+	priv->prev_obstatus = 0;
+
+	for (ii = 0; ii < FILTERLEN; ii++)
+		smoothing_filter[ii] = ZEROTWO;
+
+	for (ii = 0; ii < CARRIERNO; ii++) {
+		Rnow[ii] = FIXEDPT_ZERO;
+		R[ii] = FIXEDPT_ZERO;
+		Rtmp[ii] = FIXEDPT_ZERO;
+		mask[ii] = FIXEDPT_ZERO;
+	}
+	*prev = now();
+	*ctime = now();
+
+	clean_mask(m);
+
+	// Write 0 on FPGA registers dedicated to obfuscation mask
+	openofdm_tx_api->reg_write(3 << 2, 0);
+	openofdm_tx_api->reg_write(4 << 2, 0);
+	openofdm_tx_api->reg_write(5 << 2, 0);
+	openofdm_tx_api->reg_write(6 << 2, 0);
+
+	printk("ANS auxiliary vars CLEANED (obfuscation is OFF)\n");
+	printFXParray(mask, CARRIERNO);
+	return;
+}
+
 void set_new_ANS_mask(struct openwifi_priv *priv) {
 	fixedpt* Rnow, *R, *Rtmp, *mask, *smoothing_filter;
 	fixedpt deltaT, expinput, weight, realvalue, carriervalue;
@@ -1045,13 +1096,24 @@ u32 calc_phy_header(struct openwifi_priv *priv, u8 rate_hw_value, bool use_ht_ra
 
 	// printk("rate_hw_value=%u\tuse_ht_rate=%u\tuse_short_gi=%u\tlen=%u\n", rate_hw_value, use_ht_rate, use_short_gi, len);
 	
-        // Generate and set new ANS obfuscation mask
+	// if active obfuscation -> Generate and set new ANS obfuscation mask
 	if (priv->obstatus > 0) {
 		// printk("ACTIVE OBFUSCATION, status = %d", priv->obstatus);
+		if (priv->prev_obstatus <= 0)
+			printk("User turned ON obfuscation\n");
 		set_new_ANS_mask(priv);
 	} else {
 		// printk("DISABLED OBFUSCATION, status = %d", priv->obstatus);
+
+		// if obfuscation was active at previous transmission,
+		// then reset all obfuscation auxiliary variables to turnOff obfuscation
+		if (priv->prev_obstatus > 0) {
+			printk("User turned OFF obfuscation\n");
+			turnOff_obfuscation(priv);
+		}
 	}
+	//always keep track of "obfuscation state at previous pkt transmission"
+	priv->prev_obstatus = priv->obstatus;
 
 	// HT-mixed mode ht signal
 
@@ -2367,12 +2429,7 @@ static int openwifi_dev_probe(struct platform_device *pdev)
 	struct platform_device *tmp_pdev;
 	struct iio_dev *tmp_indio_dev;
 	// struct gpio_leds_priv *tmp_led_priv;
-
-	fixedpt *Rnow, *R, *Rtmp, *mask, *smoothing_filter;
-	struct regmem* m;
-	timek *ctime, *prev;
 	struct dentry *data_file;
-	int ii;
 
 	printk("\n");
 
@@ -2402,11 +2459,11 @@ static int openwifi_dev_probe(struct platform_device *pdev)
 	// ANS debugfs folder
 	priv->dbgdir = debugfs_create_dir("ansdbg", NULL);
 	if (!priv->dbgdir) {
-        	printk(KERN_ALERT "debugfs_ansdbg: failed to create /sys/kernel/debug/ansdbg\n");
-        	BUG();
-    	}
+		printk(KERN_ALERT "debugfs_ansdbg: failed to create /sys/kernel/debug/ansdbg\n");
+		BUG();
+	}
 
-        //ansfile prints current mask values
+	//ansfile prints current mask values
 	printk("ANS CREATING debugfs res /%s" , priv->dbgdir->d_name.name);
 	data_file = debugfs_create_file("ansfile", 0444, priv->dbgdir, priv, &data_file_fops);
 	if (!data_file) {
@@ -2417,43 +2474,13 @@ static int openwifi_dev_probe(struct platform_device *pdev)
 	//obstatus control ON/OFF of obfuscation
 	data_file = NULL;
 	data_file = debugfs_create_u32("obstatus", 0666, priv->dbgdir, &(priv->obstatus));
-        if (!data_file) {
-            printk(KERN_ALERT "debugfs_ansdbg: failed to create /sys/kernel/debug/example1/obstatus\n");
-            BUG();
-        }
-
-	//recover ANS variables from priv and init them
-	m = &(priv->ansMem);
-
-	Rnow = priv->Rnow;
-	R = priv->R;
-	Rtmp = priv->Rtmp;
-	mask = priv->mask;
-	smoothing_filter = priv->smoothing_filter;
-	ctime = &(priv->ctime);
-	prev = &(priv->prev);
-
-	// obfuscation initally OFF
-	priv->obstatus = 0;
-
-	for (ii = 0; ii < FILTERLEN; ii++)
-		smoothing_filter[ii] = ZEROTWO;
-
-	for (ii = 0; ii < CARRIERNO; ii++) {
-		Rnow[ii] = FIXEDPT_ZERO;
-		R[ii] = FIXEDPT_ZERO;
-		Rtmp[ii] = FIXEDPT_ZERO;
-		mask[ii] = FIXEDPT_ZERO;
+	if (!data_file) {
+		printk(KERN_ALERT "debugfs_ansdbg: failed to create /sys/kernel/debug/example1/obstatus\n");
+		BUG();
 	}
-	*prev = now();
-	*ctime = now();
 
-	//init ANS priv data
-	clean_mask(m);
-	printk("ANS regmem and vectors INITIALIZED\n");
-	//set_new_ANS_mask(priv);
-	printFXParray(mask, CARRIERNO);
-
+	//at boot, keep obfuscation turned OFF
+	turnOff_obfuscation(priv);
 
 	err = of_property_read_string(of_find_node_by_path("/"), "model", &fpga_model);
 	if(err < 0) {

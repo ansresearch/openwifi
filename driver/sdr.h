@@ -426,6 +426,7 @@ struct openwifi_priv {
 	char forlongstrings[2000];
 	timek prev, ctime;
 	uint32_t obstatus; // > 0"ON" or == 0 "OFF"
+	uint32_t prev_obstatus; // obfuscation state at previous transmission
 };
 
 #endif /* OPENWIFI_SDR */
