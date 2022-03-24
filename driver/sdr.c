@@ -61,12 +61,80 @@ extern int ad9361_ctrl_outs_setup(struct ad9361_rf_phy *phy,
 #include "sdr.h"
 #include "git_rev.h"
 
+#include "fixedptc.h"
+#include <linux/jiffies.h>
+
 // driver API of component driver
 extern struct tx_intf_driver_api *tx_intf_api;
 extern struct rx_intf_driver_api *rx_intf_api;
 extern struct openofdm_tx_driver_api *openofdm_tx_api;
 extern struct openofdm_rx_driver_api *openofdm_rx_api;
 extern struct xpu_driver_api *xpu_api;
+
+// -------------------- ANS DEBUGFS CODE ----------------
+
+// function for handle read events
+static ssize_t data_read(struct file *, char *, size_t, loff_t *);
+
+static int openwifi_debugfs_open(struct inode *inode, struct file *file)
+{
+	file->private_data = inode->i_private;
+	return 0;
+}
+
+const struct file_operations data_file_fops = {
+	.owner = THIS_MODULE,
+	.read = data_read,
+	.open = openwifi_debugfs_open,
+};
+
+
+int done = 0;
+
+void printMaskToPrivString(struct openwifi_priv * priv) {
+	fixedpt* mask;
+	char* forlongstrings;
+	char tmp[200];
+	int i;
+	mask = priv->mask;
+	forlongstrings = priv->forlongstrings;
+
+	forlongstrings[0] = 0;
+	tmp[0] = 0;
+	fixedpt_str(mask[0], tmp, MAX_DEC);
+	strcat(forlongstrings, tmp);
+	for (i = 1; i < CARRIERNO; i++) {
+		tmp[0] = 0;
+		strcat(forlongstrings, ",");
+		fixedpt_str(mask[i], tmp, MAX_DEC);
+		strcat(forlongstrings, tmp);
+	}
+	strcat(forlongstrings, "\n");
+	return;
+}
+
+static ssize_t data_read(struct file *f, char *user_buf,
+                         size_t count, loff_t *ppos)
+{
+	int len = 0;
+	int lefToCopy = -1;
+	struct openwifi_priv *priv = (struct openwifi_priv *) f->private_data;
+
+	if (done == 0) {
+		printMaskToPrivString(priv);
+	}
+	done = 1;
+	len = strlen (priv->forlongstrings);
+	lefToCopy = simple_read_from_buffer (user_buf, count, ppos, priv->forlongstrings, len);
+	if (lefToCopy == 0) {
+		done = 0;
+		priv->forlongstrings[0] = 0;
+	}
+	return lefToCopy;
+	//return simple_read_from_buffer (user_buf, count, ppos, priv->forlongstrings, strlen(priv->forlongstrings));
+}
+
+// --------------------- END DEBUGFS CODE ---------------
 
 static int test_mode = 0; // 0 normal; 1 rx test
 
@@ -76,6 +144,371 @@ MODULE_LICENSE("GPL v2");
 
 module_param(test_mode, int, 0);
 MODULE_PARM_DESC(myint, "test_mode. 0 normal; 1 rx test");
+
+// ---------------ANS FUNCTIONS -------------------------------
+
+/* fill the array (data) of with (n) fixedpt numbers 
+   uniformly distributed in range [-0.5, 0.5)
+*/
+void uniform_rand (fixedpt *data, int n)
+{
+	uint32_t rand_val;
+	int32_t rangedInt;
+	int i;
+	for (i = 0; i < n; i ++) {
+		get_random_bytes(&rand_val, sizeof(uint32_t));
+		rangedInt = (rand_val  % 1001) - 500;
+		//divide by 1000 to bring rangedInt into desired range [-0.5, 0.5)
+		data[i] = fixedpt_mul(fixedpt_rconst(0.001), fixedpt_fromint((int) rangedInt));
+	}
+}
+
+void printFXParray(fixedpt* A, int len) {
+	char str[20];
+	int i;
+	printk("[");
+	for (i = 0; i < len; i++) {
+		fixedpt_str(A[i], str, MAX_DEC);
+		printk(KERN_CONT "%s ", str);
+	}
+	printk(KERN_CONT "]\n");
+}
+
+/* wipe content of mask  */
+void clean_mask (struct regmem *m)
+{
+	memset (m->word32, 0, sizeof(m->word32));
+}
+
+/* print values in mask  */
+/*
+void print_mask (struct regmem *m)
+{
+	int kk;
+	for (kk = 0; kk < MAX_CARRIER; kk ++)
+		//fprintf (stdout, "w%d %08X\n", kk, m->fxpVAL[kk]);
+		printk("ANS: w%d %ui\n", kk, m->fxpVAL[kk]);
+}
+*/
+
+
+/*multiply in-place all elements in array of doubles pointed by
+  data of size n by the scalar in a*/
+void multiply_scalar (fixedpt *data, fixedpt a, int n)
+{
+	int kk;
+	for (kk = 0; kk < n; kk ++) {
+		data [kk] = fixedpt_mul(a, data[kk]);
+	}
+}
+
+/* sum in-place all elements in arrays data1 and data2
+   of size n. Store results in data1 */
+void sum (fixedpt *data1, fixedpt *data2, int n)
+{
+	int kk;
+	fixedpt temp;
+	for (kk = 0; kk < n; kk ++) {
+		temp = fixedpt_add(data1[kk], data2[kk]);
+		data1 [kk] = temp;
+	}
+}
+
+/* sum in-place all elements in array of doubles
+   pointed by data of size n to the scalar in a.
+   Store results in data1 */
+void sum_scalar (fixedpt *data, fixedpt a, int n)
+{
+	int kk;
+	for (kk = 0; kk < n; kk ++) {
+		fixedpt tmpSum = fixedpt_add(data[kk], a);
+		data [kk] = tmpSum;
+	}
+}
+
+/* copy array of doubles pointed by datasrc of size n
+   to array of doubles pointed by datadst */
+void copy (fixedpt *datadst, fixedpt *datasrc, int n)
+{
+	memcpy ((fixedpt *) datadst, (fixedpt *) datasrc, n * sizeof (fixedpt));
+}
+
+/* clip array of doubles pointed by datasrc of size n
+   above threshold min and below threshold max */
+void clip (fixedpt *data, fixedpt min, fixedpt max, int n)
+{
+	int kk;
+	for (kk = 0; kk < n; kk ++) {
+		if (data [kk] < min) data [kk] = min;
+		if (data [kk] > max) data [kk] = max;
+	}
+}
+
+/* filter array of doubles pointed by data of size n
+   with array of doubles pointed by filter of size nf.
+   results go in array of doubles point by result,
+   must have same size as data(n)
+   NOTE: keep only central part of convolution as in matlab
+         with 'same' as shape.
+   nf must be odd
+*/
+void filter (fixedpt *data, fixedpt *filter, fixedpt *result, int n, int nf)
+{
+	int kk, jj;
+	// Before FXP algebra
+	//int radius = (nf - 1) * 0.5;
+	fixedpt nf_minus1 = fixedpt_add(fixedpt_fromint(nf), fixedpt_fromint(-1));
+	int radius = fixedpt_toint(fixedpt_mul(nf_minus1, fixedpt_rconst(0.5)));
+
+	for (kk = 0; kk < n; kk ++) {
+		fixedpt res = fixedpt_fromint(0);
+		fixedpt data_mul_filt = fixedpt_fromint(1);
+		for (jj = 0; jj < nf; jj ++) {
+			int pick_index = kk + jj - radius;
+			if (pick_index >= 0 && pick_index < n) {
+				// Before FXP algebra
+				//res = res + data [pick_index] * filter [jj];
+				data_mul_filt = fixedpt_mul(data [pick_index], filter [jj]);
+				res = fixedpt_add(res, data_mul_filt);
+			}
+		}
+		result [kk] = res;
+	}
+}
+
+/* Compute power between integers */
+int powi(int b, int e) {
+	int retval, i;
+	retval = 1;
+	for (i = 0; i < e; i++)
+		retval *= b;
+	return retval;
+}
+
+/* set carrier to carrier_value in the passed mask.
+ * returns number of carriers set, either 0 or 1.
+ * note: does not clean before setting, caller must do.  */
+int set_mask_field (struct regmem *m, int carrier, enum maskvalue carrier_value)
+{
+	uint32_t ucarrier_value;
+	int w, shift;
+	if (carrier < 0)
+		carrier = 64 + carrier;
+
+	if (carrier < 0 || carrier >= MAX_CARRIER) {
+		printk(KERN_ERR "Invalid carrier\n");
+		return 0;
+	}
+
+	// m->fxpVAL[carrier] = carrier_value;
+
+	ucarrier_value = (uint32_t) carrier_value;
+	if (ucarrier_value & ~CARRIER_MASK) {
+		printk(KERN_ERR "Carrier value out of range\n");
+		return 0;
+	}
+
+	w = carrier / CARRIERS_PER_W32;
+
+	shift = (carrier % CARRIERS_PER_W32) * BITS_PER_CARRIER;
+
+	if (w >= REQUIRED_W32) {
+		printk(KERN_ERR "Computed word outside allocated memory\n");
+		return 0;
+	}
+
+	if (shift > 30) {
+		printk(KERN_ERR "Invalid shift detected\n");
+		return 0;
+	}
+
+	m->word32[w] = m->word32[w] | (ucarrier_value << shift);
+	return 1;
+}
+
+
+
+/* Compute delta in ms between two time instants */
+int compute_delta_ms(timek t, timek prev) {
+	unsigned int ms_t, ms_prev, diff;
+	int retval;
+
+	// time_after(a,b) returns true if the time a is after time b.
+	if (time_after(prev, t)) {
+		printk(KERN_ERR "Time is going backward!");
+		BUG();
+	}
+
+	ms_t = jiffies_to_msecs(t);
+	ms_prev = jiffies_to_msecs(prev);
+
+	diff = ms_t - ms_prev;
+
+	//NB: if one instant is really much larger than the other,
+	//then their difference can be so big that, when casted to int,
+	// results to have negative sign
+	if (diff < INT_MAX)
+		retval = (int) diff;
+	else 
+		retval = INT_MAX;
+
+	if (retval < 0) {
+		//Despite all checks... how comes so?!
+		printk(KERN_ERR "Elapsed time is negative, again going backward in time!");
+		BUG();
+	}
+	return retval;
+}
+
+inline timek now(void) {
+	return jiffies;
+}
+
+/*
+This functions takes care of computing deltaT (that should be in seconds)
+with maximum possible decimal precision and within the max-range of fixdpt numbers
+*/
+fixedpt compute_deltaT (int deltams) {
+	fixedpt retval;
+	int time_delta = deltams; //NB: time_delta initially in ms
+	int MAXFXINT = powi(2, FIXEDPT_WBITS-1)-1;
+
+	//Check being in proper range for "fixedpt_fromint" conversion
+	if (time_delta < MAXFXINT)  {
+		// we are in range :)
+		retval = fixedpt_fromint(time_delta);
+		retval = fixedpt_mul(retval, fixedpt_rconst(0.001)); // ms to seconds
+		return retval;
+	}
+	//Here means time_delta not in fxpt range
+	//Let's try (lossy) conversion to move to centiseconds
+	time_delta /= 10; //here we are in centiseconds
+	if (time_delta < MAXFXINT) {
+		//Cool, we can compute delta with fxpt
+		retval = fixedpt_fromint(time_delta);
+		retval = fixedpt_mul(retval, fixedpt_rconst(0.01)); // centisec to seconds
+		return retval;
+	}
+	//Here means even in centiseconds time_delta is out of range!!!
+	//NB: possible only if time_delta > than 10 sec
+	//Let's try further lossy conversion
+	time_delta /= 10; // now we are in deciseconds
+	if (time_delta < MAXFXINT) {
+		//Cool, we can compute delta with fxpt
+		retval = fixedpt_fromint(time_delta);
+		retval = fixedpt_mul(retval, fixedpt_rconst(0.1)); // decisec to seconds
+		return retval;
+	}
+	//Here means we are still out of range... means a loooot of time passed
+	// we can simply return a very "forgetting" factor :)
+	return FIXEDPT_ZERO;
+}
+
+void set_new_ANS_mask(struct openwifi_priv *priv) {
+	fixedpt* Rnow, *R, *Rtmp, *mask, *smoothing_filter;
+	fixedpt deltaT, expinput, weight, realvalue, carriervalue;
+	timek* ctime, *prev;
+	uint32_t mask0, mask1, mask2, mask3;
+
+	int carrier, time_delta;
+	struct regmem* m;
+
+	// recover variables from priv area
+	m = &(priv->ansMem);
+
+	Rnow = priv->Rnow;
+	R = priv->R;
+	Rtmp = priv->Rtmp;
+	mask = priv->mask;
+	smoothing_filter = priv->smoothing_filter;
+	ctime = &(priv->ctime);
+	prev = &(priv->prev);
+
+	
+	*ctime = now();
+	time_delta = compute_delta_ms(*ctime, *prev); //time_delta is in ms
+	*prev = *ctime;		
+	
+	// compute_deltaT() starts from time_delta in ms and gives us deltaT in sec
+	deltaT = compute_deltaT(time_delta);
+
+	// Rnow = delta_rho * (rand(CARRIERNO, 1) - 0.5);
+	uniform_rand (Rnow, CARRIERNO);
+	multiply_scalar (Rnow, delta_rho, CARRIERNO);
+
+	// weight = exp(-alpha * deltaT)
+	expinput = fixedpt_mul(negative_alpha, deltaT);
+
+	// NB: we know fixedpt_exp is accurate and meaningful
+	//only for values between -1.5 and 0
+	if (expinput < fixedpt_rconst(-1.5)) {	
+		weight = FIXEDPT_ZERO;
+	}
+	else if (expinput > FIXEDPT_ZERO) {
+		//NB: should never happen! means deltaT was negative
+		printk(KERN_ERR "Input to exp must be negative (-0.2 x POSITIVE time-delta)");
+		BUG();
+	}
+	else
+		weight = fixedpt_exp(expinput);
+
+	// R = weight * R + Rnow;
+	multiply_scalar (R, weight, CARRIERNO);
+	sum (R, Rnow, CARRIERNO);
+
+	// Rtmp = R + ones([CARRIERNO 1]);
+	copy (Rtmp, R, CARRIERNO);
+	sum_scalar (Rtmp, fixedpt_rconst(1.0), CARRIERNO);
+
+	// Rtmp(Rtmp < 0.1) = 0.1; Rtmp(Rtmp > 1.9) = 1.9;
+	clip (Rtmp, fixedpt_rconst(0.1), fixedpt_rconst(1.9), CARRIERNO);
+
+	// mask = conv(Rtmp,smoothing_filter,'same');
+	filter (Rtmp, smoothing_filter, mask, CARRIERNO, FILTERLEN);
+
+	//printMaskToPrivString(priv);
+
+	// loop over the computed mask and set bits accordingly
+	// note: we consider DC at the center of the mask
+	//       so we have to shift when setting!
+	// -26 -> mask[6]
+	// DC  -> mask[32]
+	// +26 -> mask[58]
+	clean_mask (m);	
+	for (carrier = -26; carrier <= 26; carrier ++) {
+		// we must skip DC
+		if (carrier == 0) continue;
+
+		// quantize
+		realvalue = mask [32 + carrier];
+		carriervalue = 0;
+		if (realvalue < fixedpt_rconst(0.65)) carriervalue = v1;     // div 8
+		else if (realvalue < fixedpt_rconst(1.1)) carriervalue = v3; // div 4
+		else if (realvalue < fixedpt_rconst(1.55)) carriervalue = v2;// div 2
+		else carriervalue = v0;              								 // div 1
+
+		if (set_mask_field (m, carrier, carriervalue) < 1) {
+			printk("Error building mask\n");
+			return;
+		}
+	}
+
+	// Write masks to FPGA registers
+	mask0 = m->word32[0];
+	mask1 = m->word32[1];
+	mask2 = m->word32[2];
+	mask3 = m->word32[3];
+	openofdm_tx_api->reg_write(3 << 2, mask0);
+	openofdm_tx_api->reg_write(4 << 2, mask1);
+	openofdm_tx_api->reg_write(5 << 2, mask2);
+	openofdm_tx_api->reg_write(6 << 2, mask3);
+	//printk("setting mask to %08X %08X %08X %08X\n", mask0, mask1, mask2, mask3);
+	return;
+}
+
+
+// ---------------END of ANS FUNCTIONS ------------------------
+
 
 // ---------------rfkill---------------------------------------
 static bool openwifi_is_radio_enabled(struct openwifi_priv *priv)
@@ -604,13 +1037,21 @@ u8 gen_ht_sig_crc(u64 m)
 	return ht_sig_crc;
 }
 
-u32 calc_phy_header(u8 rate_hw_value, bool use_ht_rate, bool use_short_gi, u32 len, u8 *bytes){
+u32 calc_phy_header(struct openwifi_priv *priv, u8 rate_hw_value, bool use_ht_rate, bool use_short_gi, u32 len, u8 *bytes){
 	//u32 signal_word = 0 ;
 	u8  SIG_RATE = 0, HT_SIG_RATE;
 	u8	len_2to0, len_10to3, len_msb,b0,b1,b2, header_parity ;
 	u32 l_len, ht_len, ht_sig1, ht_sig2;
 
 	// printk("rate_hw_value=%u\tuse_ht_rate=%u\tuse_short_gi=%u\tlen=%u\n", rate_hw_value, use_ht_rate, use_short_gi, len);
+	
+        // Generate and set new ANS obfuscation mask
+	if (priv->obstatus > 0) {
+		// printk("ACTIVE OBFUSCATION, status = %d", priv->obstatus);
+		set_new_ANS_mask(priv);
+	} else {
+		// printk("DISABLED OBFUSCATION, status = %d", priv->obstatus);
+	}
 
 	// HT-mixed mode ht signal
 
@@ -868,7 +1309,7 @@ static void openwifi_tx(struct ieee80211_hw *dev,
 	}
 	
 	skb_push( skb, LEN_PHY_HEADER );
-	rate_signal_value = calc_phy_header(rate_hw_value, use_ht_rate, use_short_gi, len_mac_pdu+LEN_PHY_CRC, skb->data); //fill the phy header
+	rate_signal_value = calc_phy_header(priv, rate_hw_value, use_ht_rate, use_short_gi, len_mac_pdu+LEN_PHY_CRC, skb->data); //fill the phy header
 
 	//make sure dma length is integer times of DDC_NUM_BYTE_PER_DMA_SYMBOL
 	if (skb_tailroom(skb)<num_byte_pad) {
@@ -1927,6 +2368,12 @@ static int openwifi_dev_probe(struct platform_device *pdev)
 	struct iio_dev *tmp_indio_dev;
 	// struct gpio_leds_priv *tmp_led_priv;
 
+	fixedpt *Rnow, *R, *Rtmp, *mask, *smoothing_filter;
+	struct regmem* m;
+	timek *ctime, *prev;
+	struct dentry *data_file;
+	int ii;
+
 	printk("\n");
 
 	if (np) {
@@ -1951,6 +2398,62 @@ static int openwifi_dev_probe(struct platform_device *pdev)
 
 	priv = dev->priv;
 	priv->pdev = pdev;
+
+	// ANS debugfs folder
+	priv->dbgdir = debugfs_create_dir("ansdbg", NULL);
+	if (!priv->dbgdir) {
+        	printk(KERN_ALERT "debugfs_ansdbg: failed to create /sys/kernel/debug/ansdbg\n");
+        	BUG();
+    	}
+
+        //ansfile prints current mask values
+	printk("ANS CREATING debugfs res /%s" , priv->dbgdir->d_name.name);
+	data_file = debugfs_create_file("ansfile", 0444, priv->dbgdir, priv, &data_file_fops);
+	if (!data_file) {
+		printk(KERN_ALERT "debugfs_ansdbg: failed to create /sys/kernel/debug/ansdbg/ansfile\n");
+		BUG();
+	}
+
+	//obstatus control ON/OFF of obfuscation
+	data_file = NULL;
+	data_file = debugfs_create_u32("obstatus", 0666, priv->dbgdir, &(priv->obstatus));
+        if (!data_file) {
+            printk(KERN_ALERT "debugfs_ansdbg: failed to create /sys/kernel/debug/example1/obstatus\n");
+            BUG();
+        }
+
+	//recover ANS variables from priv and init them
+	m = &(priv->ansMem);
+
+	Rnow = priv->Rnow;
+	R = priv->R;
+	Rtmp = priv->Rtmp;
+	mask = priv->mask;
+	smoothing_filter = priv->smoothing_filter;
+	ctime = &(priv->ctime);
+	prev = &(priv->prev);
+
+	// obfuscation initally OFF
+	priv->obstatus = 0;
+
+	for (ii = 0; ii < FILTERLEN; ii++)
+		smoothing_filter[ii] = ZEROTWO;
+
+	for (ii = 0; ii < CARRIERNO; ii++) {
+		Rnow[ii] = FIXEDPT_ZERO;
+		R[ii] = FIXEDPT_ZERO;
+		Rtmp[ii] = FIXEDPT_ZERO;
+		mask[ii] = FIXEDPT_ZERO;
+	}
+	*prev = now();
+	*ctime = now();
+
+	//init ANS priv data
+	clean_mask(m);
+	printk("ANS regmem and vectors INITIALIZED\n");
+	//set_new_ANS_mask(priv);
+	printFXParray(mask, CARRIERNO);
+
 
 	err = of_property_read_string(of_find_node_by_path("/"), "model", &fpga_model);
 	if(err < 0) {
@@ -2293,10 +2796,21 @@ static int openwifi_dev_probe(struct platform_device *pdev)
 static int openwifi_dev_remove(struct platform_device *pdev)
 {
 	struct ieee80211_hw *dev = platform_get_drvdata(pdev);
-
+        struct openwifi_priv *priv;
+       
 	if (!dev) {
 		pr_info("%s openwifi_dev_remove: dev %p\n", sdr_compatible_str, (void*)dev);
 		return(-1);
+	}
+
+	priv = dev->priv;
+
+	if (priv->dbgdir) {
+		debugfs_remove_recursive(priv->dbgdir);
+		printk("ANS removing debugfs resource /%s\n", priv->dbgdir->d_name.name);	
+	}
+	else {
+		printk("ANS cannot remove /sys/kernel/debug/ansdbg");
 	}
 
 	openwifi_rfkill_exit(dev);

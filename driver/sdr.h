@@ -6,6 +6,7 @@
 #define OPENWIFI_SDR
 
 #include "pre_def.h"
+#include "fixedptc.h"
 
 // -------------------for leds--------------------------------
 struct gpio_led_data { //please always align with the leds-gpio.c in linux kernel
@@ -72,7 +73,7 @@ union u16_byte2 {
 #define OPENWIFI_LED_MAX_NAME_LEN 32
 
 // ------------ software reg definition ------------
-#define MAX_NUM_DRV_REG            8
+#define MAX_NUM_DRV_REG            24
 #define DRV_TX_REG_IDX_RATE        0
 #define DRV_TX_REG_IDX_FREQ_BW_CFG 1
 #define DRV_TX_REG_IDX_PRINT_CFG   (MAX_NUM_DRV_REG-1)
@@ -310,6 +311,39 @@ struct cf_axi_dds_state {
 // ===== end of copy from adi-linux/drivers/iio/frequency/cf_axi_dds.c =====
 
 #define RX_DMA_CYCLIC_MODE
+
+
+// ===== ANS mask utilities =====
+
+#define CARRIERNO 64
+
+#define FILTERLEN 5
+#define ZEROTWO fixedpt_rconst(0.2)
+#define delta_rho fixedpt_rconst(0.6)
+#define alpha fixedpt_rconst(0.2)
+#define negative_alpha fixedpt_rconst(-0.2)
+
+typedef unsigned long timek;
+
+#define BITS_PER_CARRIER 2
+#define CARRIER_MASK ((1 << BITS_PER_CARRIER) - 1)
+#define MAX_CARRIER 64
+#define REQUIRED_W32 (MAX_CARRIER * BITS_PER_CARRIER / 32)
+#define CARRIERS_PER_W32 (32 / BITS_PER_CARRIER)
+
+enum maskvalue {
+	v0 = 0,
+	v1 = 1,
+	v2 = 2,
+	v3 = 3,
+};
+
+struct regmem {
+	uint32_t word32 [REQUIRED_W32];
+} __attribute__((packed));
+
+
+
 struct openwifi_priv {
 	struct platform_device *pdev;
 	struct ieee80211_vif *vif[MAX_NUM_VIF];
@@ -380,6 +414,18 @@ struct openwifi_priv {
 	// char led_name[MAX_NUM_LED][OPENWIFI_LED_MAX_NAME_LEN];
 
 	spinlock_t lock;
+
+	// ANS necessary variables
+	struct dentry *dbgdir;
+	struct regmem ansMem;
+	fixedpt Rnow [CARRIERNO];
+	fixedpt R [CARRIERNO];
+	fixedpt Rtmp [CARRIERNO];
+	fixedpt mask [CARRIERNO];
+	fixedpt smoothing_filter [FILTERLEN];
+	char forlongstrings[2000];
+	timek prev, ctime;
+	uint32_t obstatus; // > 0"ON" or == 0 "OFF"
 };
 
 #endif /* OPENWIFI_SDR */
