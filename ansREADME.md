@@ -108,8 +108,8 @@ root@analog:~/openwifi> cat /sys/kernel/debug/ansdbg/ansfile
 * Turn ON obfuscation and continuously check coefficients
 
 ```console
-root@analog:~/openwifi>echo 1 > /sys/kernel/debug/ansdbg/obstatus 
-root@analog:~/openwifi>cat /sys/kernel/debug/ansdbg/ansfile 
+root@analog:~/openwifi> echo 1 > /sys/kernel/debug/ansdbg/obstatus 
+root@analog:~/openwifi> cat /sys/kernel/debug/ansdbg/ansfile 
 0.7589,1.1389,1.1589,1.00399,0.91631,0.89262,0.67873,0.70981,0.63689,0.78548,0.89175,0.87156,0.92462,1.16713,0.94581,
 1.0.92855,1.07741,1.16254,1.08413,1.04553,0.84065,0.68396,0.73936,0.81563,0.98617,0.96619,1.02331,0.91186,0.88282,
 2.0.81341,0.79444,0.74385,0.93635,0.99995,1.20331,1.20034,1.35198,1.2017,0.9568,0.80636,0.94567,0.66939,0.51395,
@@ -118,7 +118,7 @@ root@analog:~/openwifi>cat /sys/kernel/debug/ansdbg/ansfile
 root@analog:~/openwifi>
 root@analog:~/openwifi>
 root@analog:~/openwifi>
-root@analog:~/openwifi>cat /sys/kernel/debug/ansdbg/ansfile 
+root@analog:~/openwifi> cat /sys/kernel/debug/ansdbg/ansfile 
 0.61299,0.63298,0.65298,0.5633,0.32318,0.62421,0.79349,0.9587,1.04023,1.19234,1.25131,1.43732,1.31178,1.11218,0.92471,0.57201,
 1.0.40085,0.5498,0.67117,0.79817,0.79087,0.96675,1.13813,1.21654,1.35852,1.40262,1.18456,0.91514,0.83193,0.68408,0.71731,
 2.0.88584,0.79526,0.86034,1.02944,1.03661,0.97282,1.16312,1.01572,0.98084,1.13521,1.04909,0.86524,1.1910,1.16799,1.09125,
@@ -127,7 +127,7 @@ root@analog:~/openwifi>cat /sys/kernel/debug/ansdbg/ansfile
 root@analog:~/openwifi>
 root@analog:~/openwifi>
 root@analog:~/openwifi>
-root@analog:~/openwifi>cat /sys/kernel/debug/ansdbg/ansfile 
+root@analog:~/openwifi> cat /sys/kernel/debug/ansdbg/ansfile 
 0.35044,0.37044,0.62804,0.46197,0.54881,0.8500,1.20867,1.2145,1.45011,1.63964,1.4844,1.48574,1.32441,1.19027,1.04125,0.8953,
 1.0.56902,0.48691,0.33102,0.44079,0.76375,0.92144,1.05425,1.02212,1.10891,0.78595,0.79013,0.75304,0.89002,0.78593,0.93384,
 2.1.02605,0.93033,1.11551,1.0900,0.98054,1.01131,1.23638,0.87638,0.95166,1.27322,1.0769,1.02196,1.38196,1.35646,1.18054,
