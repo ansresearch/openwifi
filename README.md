@@ -49,13 +49,13 @@ Openwifi code has dual licenses. [AGPLv3](https://github.com/open-sdr/openwifi/b
 
 board_name|board combination|status|SD card img|Vivado license
 -------|-------|----|----|-----
-zc706_fmcs2|[Xilinx ZC706 board](https://www.xilinx.com/products/boards-and-kits/ek-z7-zc706-g.html) + [FMCOMMS2/3/4](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/eval-ad-fmcomms2.html)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.0-wilsele-32bit.img.xz)|Need
-zed_fmcs2|[Xilinx zed board](https://www.xilinx.com/products/boards-and-kits/1-8dyf-11.html) + [FMCOMMS2/3/4](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/eval-ad-fmcomms2.html)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.0-wilsele-32bit.img.xz)|**NO** need
-adrv9364z7020|[ADRV9364-Z7020 + ADRV1CRR-BOB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/adrv9364-z7020.html)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.0-wilsele-32bit.img.xz)|**NO** need
-adrv9361z7035|[ADRV9361-Z7035 + ADRV1CRR-BOB/FMC](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/ADRV9361-Z7035.html)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.0-wilsele-32bit.img.xz)|Need
-zc702_fmcs2|[Xilinx ZC702 board](https://www.xilinx.com/products/boards-and-kits/ek-z7-zc702-g.html) + [FMCOMMS2/3/4](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/eval-ad-fmcomms2.html)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.0-wilsele-32bit.img.xz)|**NO** need
-antsdr|[MicroPhase](https://github.com/MicroPhase/) enhanced ADALM-PLUTO [Notes](kernel_boot/boards/antsdr/notes.md)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.0-wilsele-32bit.img.xz)|**NO** need
-zcu102_fmcs2|[Xilinx ZCU102 board](https://www.xilinx.com/products/boards-and-kits/ek-u1-zcu102-g.html) + [FMCOMMS2/3/4](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/eval-ad-fmcomms2.html)|Done|[64bit img](https://users.ugent.be/~xjiao/openwifi-1.3.0-wilsele-64bit.img.xz)|Need
+zc706_fmcs2|[Xilinx ZC706 board](https://www.xilinx.com/products/boards-and-kits/ek-z7-zc706-g.html) + [FMCOMMS2/3/4](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/eval-ad-fmcomms2.html)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.1-wilsele-32bit.img.xz)|Need
+zed_fmcs2|[Xilinx zed board](https://www.xilinx.com/products/boards-and-kits/1-8dyf-11.html) + [FMCOMMS2/3/4](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/eval-ad-fmcomms2.html)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.1-wilsele-32bit.img.xz)|**NO** need
+adrv9364z7020|[ADRV9364-Z7020 + ADRV1CRR-BOB](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/adrv9364-z7020.html)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.1-wilsele-32bit.img.xz)|**NO** need
+adrv9361z7035|[ADRV9361-Z7035 + ADRV1CRR-BOB/FMC](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/ADRV9361-Z7035.html)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.1-wilsele-32bit.img.xz)|Need
+zc702_fmcs2|[Xilinx ZC702 board](https://www.xilinx.com/products/boards-and-kits/ek-z7-zc702-g.html) + [FMCOMMS2/3/4](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/eval-ad-fmcomms2.html)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.1-wilsele-32bit.img.xz)|**NO** need
+antsdr|[MicroPhase](https://github.com/MicroPhase/) enhanced ADALM-PLUTO [Notes](kernel_boot/boards/antsdr/notes.md)|Done|[32bit img](https://users.ugent.be/~xjiao/openwifi-1.3.1-wilsele-32bit.img.xz)|**NO** need
+zcu102_fmcs2|[Xilinx ZCU102 board](https://www.xilinx.com/products/boards-and-kits/ek-u1-zcu102-g.html) + [FMCOMMS2/3/4](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/eval-ad-fmcomms2.html)|Done|[64bit img](https://users.ugent.be/~xjiao/openwifi-1.3.1-wilsele-64bit.img.xz)|Need
 zcu102_9371|[Xilinx ZCU102 board](https://www.xilinx.com/products/boards-and-kits/ek-u1-zcu102-g.html) + [ADRV9371](https://www.analog.com/en/design-center/evaluation-hardware-and-software/evaluation-boards-kits/eval-adrv9371.html)|Future|Future|Need
 
 - board_name is used to identify FPGA design in openwifi-hw/boards/
@@ -83,10 +83,12 @@ zcu102_9371|[Xilinx ZCU102 board](https://www.xilinx.com/products/boards-and-kit
   ```
   ssh root@192.168.10.122
   ```
-- On board, run openwifi AP and the on board webserver
+- Then, run openwifi AP and the on board webserver
   ```
-  ~/openwifi/fosdem.sh
-  (Use "./fosdem.sh 1" to enable experimental AMPDU aggregation on top of 11n)
+  cd openwifi
+  ./wgd.sh
+  ./fosdem.sh
+  (Use "./wgd.sh 1" to enable experimental AMPDU aggregation on top of 11n)
   (Use "./fosdem-11ag.sh" to force 11a/g mode)
   ```
   **NOTE** adrv9361z7035 has ultra low TX power in 5GHz. Move **CLOSER** when you use that board in 5GHz!!!
@@ -117,14 +119,16 @@ The board actually is an Linux/Ubuntu computer which is running **hostapd** to o
   wpa_supplicant -i sdr0 -c wpa-connect.conf &
   dhclient sdr0
   ```
-- Use openwifi in ad-hoc mode: Please check **sdr-ad-hoc-up.sh** and **sdr-ad-hoc-join.sh**.
-- Use openwifi in monitor mode: Please check **monitor_ch.sh**.
+- Use openwifi in ad-hoc mode: Please check **sdr-ad-hoc-up.sh**, **sdr-ad-hoc-join.sh** and [this app note](./doc/app_notes/ad-hoc-two-sdr.md).
+- Use openwifi in monitor mode: Please check **monitor_ch.sh** and [this app note](./doc/app_notes/inject_80211.md).
 - The Linux native Wi-Fi tools/Apps (iwconfig/ifconfig/iwlist/iw/hostapd/wpa_supplicant/etc) can run over openwifi NIC in the same way as commercial Wi-Fi chip. 
-- **sdrctl** is a dedicated tool to access openwifi driver/FPGA, please check doc directory for more information. 
+- **sdrctl** is a dedicated tool to access openwifi driver/FPGA, please check [project document](./doc/README.md) for more information. 
 
 ## Update FPGA
 
-Since the pre-built SD card image might not have the latest bug-fixes/updates, it is recommended to update the fpga bitstream on board.
+(Check [Driver and FPGA dynamic reloading app note](./doc/app_notes/drv_fpga_dynamic_loading.md) for more convenient way of updating FPGA and driver files)
+
+Since the pre-built SD card image might not have the latest bug-fixes/updates, it is recommended to always copy the latest files in the [user_space](./user_space) directory on to the board. Then update the fpga bitstream and driver (see next section) on to the board.
 
 - Install Vivado/SDK 2018.3 (Vivado Design Suite - HLx Editions - 2018.3 Full Product Installation. If you don't need to generate new FPGA bitstream, WebPack version without license is enough)
 - Setup environment variables (use absolute path):
@@ -156,10 +160,15 @@ Since the pre-built SD card image might not have the latest bug-fixes/updates, i
   umount /mnt
   ```
   **Power cycle** the board to load new FPGA bitstream.
+  
+  To load FPGA dynamically without rebooting/power-cycle, check [Driver and FPGA dynamic reloading app note](./doc/app_notes/drv_fpga_dynamic_loading.md).
 
 ## Update Driver
 
-Since the pre-built SD card image might not have the latest bug-fixes/updates, it is recommended to update the driver on board.
+(Check [Driver and FPGA dynamic reloading app note](./doc/app_notes/drv_fpga_dynamic_loading.md) for more convenient way of updating FPGA and driver files)
+
+Since the pre-built SD card image might not have the latest bug-fixes/updates, it is recommended to always copy the latest files in the [user_space](./user_space) directory on to the board. Then update the fpga bitstream (see previous section) and driver on to the board.
+
 - Prepare Analog Devices Linux kernel source code (only need to run once):
   ```
   cd openwifi/user_space; ./prepare_kernel.sh $XILINX_DIR ARCH_BIT build
@@ -170,12 +179,15 @@ Since the pre-built SD card image might not have the latest bug-fixes/updates, i
   ```
   cd openwifi/driver; ./make_all.sh $XILINX_DIR ARCH_BIT
   (For Zynq 7000, ARCH_BIT should be 32, for Zynq MPSoC, ARCH_BIT should be 64)
+  (More arguments (max 5) beyond above two will be converted to "#define argument" in pre_def.h for conditional compiling)
   ```
 - Copy the driver files to the board via ssh channel
   ```
   cd openwifi/driver; scp `find ./ -name \*.ko` root@192.168.10.122:openwifi/
   ```
-  Now you can use **wgd.sh** on board to load the new openwifi driver.
+  Now you can use **wgd.sh** on board to load the new openwifi driver. **wgd.sh** also tries to reload FPGA img if system_top.bit.bin presents in the same directory. 
+  Find more information in [Driver and FPGA dynamic reloading app note](./doc/app_notes/drv_fpga_dynamic_loading.md).
+  
   **Note**: If you have symbol or version error while loadng the driver, it could be because the kernel in the SD card image is too old. In this case, you need to follow [[Build openwifi Linux img from scratch](#Build-openwifi-Linux-img-from-scratch)] to generate your new SD card image.
 
 ## Update sdrctl
@@ -189,6 +201,7 @@ Since the pre-built SD card image might not have the latest bug-fixes/updates, i
   ```
 ## Easy Access and etc
 
+- Check [Driver and FPGA dynamic reloading app note](./doc/app_notes/drv_fpga_dynamic_loading.md) for more convenient way of updating FPGA and driver files.
 - FPGA and driver on board update scripts
   - Setup [ftp server](https://ubuntu.com/server/docs/service-ftp) on PC, allow anonymous and change ftp root directory to the openwifi directory.
   - On board:
@@ -231,6 +244,12 @@ Since the pre-built SD card image might not have the latest bug-fixes/updates, i
   **ethX** is the PC NIC name connecting the board ethernet. **NICY** is the PC NIC name connecting internet (WiFi or another ethernet).
   
   If you want, uncommenting "net.ipv4.ip_forward=1" in /etc/sysctl.conf to make IP forwarding persistent on PC.
+- Test the connectivity. Run on board (in the ssh session):
+  ```
+  route add default gw 192.168.10.1
+  ping IP_YOU_KNOW_ON_YOUR_NETWORK
+  ```
+  If there is issue with the connectivity (ping can not reach the target), it needs to be solved before going to the next step.
 - Run **one time** script on board to complete post installation/config (After this, password becomes **openwifi**)
   ```
   cd ~/openwifi && ./post_config.sh

@@ -51,7 +51,7 @@ The FPGA also has a register to override the re-transmission and ACK behavior. C
 ```
 ./sdrctl dev sdr0 get reg xpu 11
 ```
-When operate this register, make sure you only change the relevant bits and leave other bits untouched, because other bits have other purposes. Also check the xpu register 11 in the document: https://github.com/open-sdr/openwifi/blob/master/doc/README.md
+When operate this register, make sure you only change the relevant bits and leave other bits untouched, because other bits have other purposes. Also check the xpu register 11 in the [project document](../README.md)
 
 To override the maximum number of re-transmission, set bit3 to 1, and set the value (0 ~ 7) to bit2 ~ 0. Example, override the maximum number of re-transmission to 1
 ```
@@ -162,7 +162,20 @@ insmod sdr.ko init_tx_att=20000
 You can change above driver loading action at the end of **wgd.sh**.
 
 The initial Tx attenuation might be useful when you connect two SDR boards directly by cable. Even though, you shouldn't not connect them during the setup phase (bring up the AP or client), because the initialization/tuning of AD9361 might generate big Tx power and kill the other AD9361's Rx. Only connect two SDR boards by cable after both sides have been setup and the attenuation setting takes effect.
-  
+
+To increase the Tx power, you can consider add external PA like [this](https://github.com/open-sdr/openwifi/issues/53#issuecomment-767621478). Or increase the value of register 13 of tx_intf (check [README](../README.md)).
+
+Read the register value:
+```
+./sdrctl dev sdr0 get reg tx_intf 13
+```
+
+Set the register value to N (a number larger than the value read back above):
+```
+./sdrctl dev sdr0 set reg tx_intf 13 N
+```
+Bigger value in that register could hurt the Tx EVM and long packet signal. You need to fine tune it for your case.
+
 ## Tx Lo and port config
 
 In normal operation, the Tx Lo and RF port are controled by FPGA automatically during signal Tx. To check the current Tx Lo and RF port switch status
@@ -198,7 +211,7 @@ Above command will fix the AD9361 in 5220MHz and let driver ignore frequency tun
 ```
 ./set_restrict_freq.sh 0
 ```
-To let openwifi work at arbitrary frequency, please check "Let openwifi work at arbitrary frequency" in https://github.com/open-sdr/openwifi/blob/master/doc/README.md#Regulation-and-channel-config
+To let openwifi work at arbitrary frequency, please check [Let openwifi work at arbitrary frequency](../README.md#let-openwifi-work-at-arbitrary-frequency)
 
 ## Receiver sensitivity control
 
