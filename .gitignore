@@ -16,3 +16,9 @@ git_rev.h
 pre_def.h
 
 ansREADME.pdf
+
+user_space/drv_and_fpga.tar.gz
+user_space/drv_and_fpga/
+user_space/hdf_and_bit/
+user_space/system_top.bit
+user_space/system_top.bit.bin
