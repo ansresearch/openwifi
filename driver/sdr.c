@@ -548,7 +548,7 @@ void set_new_ANS_mask(struct openwifi_priv *priv) {
 	// DC  -> mask[32]
 	// +26 -> mask[58]
 	clean_mask (m);	
-	for (carrier = -26; carrier <= 26; carrier ++) {
+	for (carrier = -28; carrier <= 28; carrier ++) {
 		// we must skip DC
 		if (carrier == 0) continue;
 
@@ -1817,6 +1817,7 @@ static void openwifi_tx(struct ieee80211_hw *dev,
 	cts_reg = ((use_cts_protect|force_use_cts_protect)<<31 | cts_use_traffic_rate<<30 | cts_duration<<8 | cts_rate_signal_value<<4 | rate_signal_value);
 	tx_config = ( prio<<26 | ring->bd_wr_idx<<20 | queue_idx<<18 | retry_limit_hw_value<<14 | pkt_need_ack<<13 | num_dma_symbol );
 	phy_hdr_config = ( ht_aggr_start<<20 | rate_hw_value<<16 | use_ht_rate<<15 | use_short_gi<<14 | use_ht_aggr<<13 | len_psdu );
+	printk("rate_hw_value = %08X, phy_hdr_config = %08X\n", rate_hw_value, phy_hdr_config);
 
 	/* We must be sure that tx_flags is written last because the HW
 	 * looks at it to check if the rest of data is valid or not
