@@ -167,11 +167,11 @@ enum sdrctl_reg_cat {
 //#define HIGH_PRIORITY_DISCARD_FLAG ((~0x140)<<16) // don't force drop OTHER_BSS and PROB_REQ by high priority discard
 
 /* 5G chan 36 - chan 64*/
-#define SDR_5GHZ_CH36_64 REG_RULE(5150-10, 5350+10, 80, 0, 20, 0)
+#define SDR_5GHZ_CH36_64 REG_RULE(5150-10, 5845+10, 80, 0, 20, 0)
 /* 5G chan 32 - chan 173*/
 #define SDR_5GHZ_CH32_173 REG_RULE(5160-10, 5865+10, 80, 0, 20, 0)
 /* 5G chan 36 - chan 48*/
-#define SDR_5GHZ_CH36_48 REG_RULE(5150-10, 5270+10, 80, 0, 20, 0)
+#define SDR_5GHZ_CH36_48 REG_RULE(5150-10, 5845+10, 80, 0, 20, 0)
 
 /*
  *Only these channels all allow active
@@ -274,13 +274,13 @@ static const struct ieee80211_channel openwifi_5GHz_channels[] = {
 	CHAN5G(46, 5230, 0),
 	CHAN5G(48, 5240, 0),
 	// CHAN5G( 50, 5250, IEEE80211_CHAN_RADAR),
-	CHAN5G( 52, 5260, IEEE80211_CHAN_RADAR),
+	CHAN5G( 52, 5260, 0),
 	// CHAN5G( 54, 5270, IEEE80211_CHAN_RADAR),
-	CHAN5G( 56, 5280, IEEE80211_CHAN_RADAR),
+	CHAN5G( 56, 5280, 0),
 	// CHAN5G( 58, 5290, IEEE80211_CHAN_RADAR),
-	CHAN5G( 60, 5300, IEEE80211_CHAN_RADAR),
+	CHAN5G( 60, 5300, 0),
 	// CHAN5G( 62, 5310, IEEE80211_CHAN_RADAR),
-	CHAN5G( 64, 5320, IEEE80211_CHAN_RADAR),
+	CHAN5G( 64, 5320, 0),
 	// CHAN5G( 68, 5340, IEEE80211_CHAN_RADAR),
 	// CHAN5G( 96, 5480, IEEE80211_CHAN_RADAR),
 	// CHAN5G(100, 5500, IEEE80211_CHAN_RADAR),
@@ -310,6 +310,7 @@ static const struct ieee80211_channel openwifi_5GHz_channels[] = {
 	// CHAN5G(153, 5765, IEEE80211_CHAN_RADAR),
 	// CHAN5G(155, 5775, IEEE80211_CHAN_RADAR),
 	// CHAN5G(157, 5785, IEEE80211_CHAN_RADAR),
+	 CHAN5G(157, 5785, 0)
 	// CHAN5G(159, 5795, IEEE80211_CHAN_RADAR),
 	// CHAN5G(161, 5805, IEEE80211_CHAN_RADAR),
 	// // CHAN5G(163, 5815, IEEE80211_CHAN_RADAR),
@@ -474,6 +475,9 @@ enum maskvalue {
 struct regmem {
 	uint32_t word32 [REQUIRED_W32];
 } __attribute__((packed));
+
+
+
 struct openwifi_priv {
 	struct platform_device *pdev;
 	struct ieee80211_vif *vif[MAX_NUM_VIF];
@@ -496,7 +500,7 @@ struct openwifi_priv {
 	struct ieee80211_rate rates_2GHz[12];
 	struct ieee80211_rate rates_5GHz[12];
 	struct ieee80211_channel channels_2GHz[13];
-	struct ieee80211_channel channels_5GHz[11];
+	struct ieee80211_channel channels_5GHz[12];
 	struct ieee80211_supported_band band_2GHz;
 	struct ieee80211_supported_band band_5GHz;
 	bool rfkill_off;
